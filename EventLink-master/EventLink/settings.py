@@ -11,6 +11,10 @@ DEBUG = os.environ.get('DEBUG', 'True') == 'True'
 
 ALLOWED_HOSTS = os.environ.get('ALLOWED_HOSTS', '127.0.0.1,localhost').split(',')
 
+# Allow all hosts if ALLOWED_HOSTS env var is set to *
+if ALLOWED_HOSTS == ['*']:
+    ALLOWED_HOSTS = ['*']
+
 INSTALLED_APPS = [
     'widget_tweaks',
     'Home.apps.HomeConfig',
