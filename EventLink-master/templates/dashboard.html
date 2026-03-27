@@ -1,0 +1,135 @@
+{% extends 'base.html' %}
+{% block title %}Dashboard — EventLink{% endblock %}
+
+{% block content %}
+<div class="max-w-6xl mx-auto px-6 py-10 animate-slide-up">
+
+  <!-- Profile header -->
+  <div class="flex items-center gap-5 mb-8 p-6 bg-white/70 dark:bg-gray-800/70 backdrop-blur-sm border border-gray-200/60 dark:border-gray-700/60 rounded-2xl shadow-sm">
+    {% if profile.profile_picture %}
+      <img src="{{ profile.profile_picture.url }}" class="w-16 h-16 rounded-2xl object-cover ring-2 ring-indigo-200 dark:ring-indigo-800" alt="avatar">
+    {% else %}
+      <div class="w-16 h-16 rounded-2xl bg-gradient-to-br from-indigo-500 to-purple-600 flex items-center justify-center text-2xl font-bold text-white shadow-lg">
+        {{ user.username|first|upper }}
+      </div>
+    {% endif %}
+    <div class="flex-1">
+      <h1 class="text-2xl font-bold text-gray-900 dark:text-white">
+        Hey, {{ profile.full_name|default:user.username }} 👋
+      </h1>
+      <p class="text-sm text-gray-400 mt-0.5">
+        {% if profile.class_name %}{{ profile.class_name }}{% if profile.section %} · {{ profile.section }}{% endif %}
+        {% else %}Complete your profile so teammates can find you{% endif %}
+      </p>
+    </div>
+    <a href="{% url 'complete_profile' %}"
+      class="text-sm px-4 py-2 rounded-xl border border-gray-200 dark:border-gray-700 hover:border-indigo-400 hover:text-indigo-600 dark:hover:text-indigo-400 transition">
+      Edit Profile
+    </a>
+  </div>
+
+  <!-- Stats -->
+  <div class="grid grid-cols-3 gap-4 mb-8">
+    <div class="bg-gradient-to-br from-indigo-500 to-purple-600 text-white p-5 rounded-2xl shadow-lg shadow-indigo-500/20">
+      <p class="text-xs font-medium text-indigo-200 mb-1">Teams</p>
+      <p class="text-3xl font-bold">{{ teams.count }}</p>
+    </div>
+    <div class="bg-gradient-to-br from-emerald-400 to-cyan-500 text-white p-5 rounded-2xl shadow-lg shadow-emerald-500/20">
+      <p class="text-xs font-medium text-emerald-100 mb-1">Events</p>
+      <p class="text-3xl font-bold">{{ events_count }}</p>
+    </div>
+    <div class="bg-gradient-to-br from-pink-500 to-rose-500 text-white p-5 rounded-2xl shadow-lg shadow-pink-500/20">
+      <p class="text-xs font-medium text-pink-200 mb-1">Skills</p>
+      <p class="text-3xl font-bold">{{ profile.virtues.count }}</p>
+    </div>
+  </div>
+
+  <!-- Quick actions -->
+  <div class="grid grid-cols-1 sm:grid-cols-3 gap-4 mb-8">
+    <a href="{% url 'find_teammates' %}"
+      class="group bg-white/70 dark:bg-gray-800/70 backdrop-blur-sm border border-gray-200/60 dark:border-gray-700/60 rounded-2xl p-6 shadow-sm hover:shadow-xl hover:-translate-y-1 hover:border-indigo-300 dark:hover:border-indigo-700 transition duration-300">
+      <div class="text-2xl mb-3">🤝</div>
+      <p class="font-semibold text-gray-900 dark:text-white group-hover:text-indigo-600 dark:group-hover:text-indigo-400 transition">Find Teammates</p>
+      <p class="text-xs text-gray-400 mt-1">Browse students looking to team up</p>
+    </a>
+    <a href="{% url 'create_team' %}"
+      class="group bg-white/70 dark:bg-gray-800/70 backdrop-blur-sm border border-gray-200/60 dark:border-gray-700/60 rounded-2xl p-6 shadow-sm hover:shadow-xl hover:-translate-y-1 hover:border-indigo-300 dark:hover:border-indigo-700 transition duration-300">
+      <div class="text-2xl mb-3">👥</div>
+      <p class="font-semibold text-gray-900 dark:text-white group-hover:text-indigo-600 dark:group-hover:text-indigo-400 transition">Create a Team</p>
+      <p class="text-xs text-gray-400 mt-1">Start a new team for an event</p>
+    </a>
+    <a href="{% url 'events' %}"
+      class="group bg-gradient-to-br from-indigo-600 to-purple-600 rounded-2xl p-6 shadow-lg shadow-indigo-500/20 hover:shadow-xl hover:-translate-y-1 transition duration-300">
+      <div class="text-2xl mb-3">🎯</div>
+      <p class="font-semibold text-white">Browse Events</p>
+      <p class="text-xs text-indigo-200 mt-1">Discover hackathons and fests</p>
+    </a>
+  </div>
+
+  <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+
+    <!-- Teams -->
+    <div>
+      <div class="flex items-center justify-between mb-4">
+        <h2 class="text-lg font-semibold text-gray-900 dark:text-white">Your Teams</h2>
+        <a href="{% url 'create_team' %}" class="text-sm text-indigo-600 dark:text-indigo-400 hover:underline">+ New</a>
+      </div>
+      {% if teams %}
+        <div class="space-y-3">
+          {% for team in teams %}
+            <div class="bg-white/70 dark:bg-gray-800/70 backdrop-blur-sm border border-gray-200/60 dark:border-gray-700/60 rounded-xl p-4 flex items-center justify-between">
+              <div>
+                <p class="font-semibold text-gray-900 dark:text-white">{{ team.name }}</p>
+                <p class="text-xs text-gray-400">{{ team.members.count }} member{{ team.members.count|pluralize }}</p>
+              </div>
+              {% if team.leader == user %}
+                <span class="text-xs bg-indigo-100 dark:bg-indigo-900/40 text-indigo-600 dark:text-indigo-400 px-2.5 py-0.5 rounded-full font-medium">Leader</span>
+              {% endif %}
+            </div>
+          {% endfor %}
+        </div>
+      {% else %}
+        <div class="bg-white/70 dark:bg-gray-800/70 border border-dashed border-gray-300 dark:border-gray-700 rounded-xl p-8 text-center">
+          <p class="text-gray-400 text-sm">No teams yet.</p>
+          <a href="{% url 'create_team' %}" class="mt-2 inline-block text-sm text-indigo-600 dark:text-indigo-400 hover:underline">Create one →</a>
+        </div>
+      {% endif %}
+    </div>
+
+    <!-- Event Applications -->
+    <div>
+      <div class="flex items-center justify-between mb-4">
+        <h2 class="text-lg font-semibold text-gray-900 dark:text-white">Event Applications</h2>
+        <a href="{% url 'events' %}" class="text-sm text-indigo-600 dark:text-indigo-400 hover:underline">Browse events</a>
+      </div>
+      {% if registrations %}
+        <div class="space-y-3">
+          {% for reg in registrations %}
+            <a href="{% url 'event_detail' reg.event.id %}"
+              class="flex items-center justify-between bg-white/70 dark:bg-gray-800/70 backdrop-blur-sm border border-gray-200/60 dark:border-gray-700/60 rounded-xl p-4 hover:border-indigo-300 dark:hover:border-indigo-700 transition">
+              <div>
+                <p class="font-semibold text-gray-900 dark:text-white text-sm">{{ reg.event.title }}</p>
+                <p class="text-xs text-gray-400 mt-0.5">{{ reg.team.name }} · {{ reg.submitted_at|date:"M d, Y" }}</p>
+              </div>
+              <span class="text-xs font-semibold px-2.5 py-1 rounded-full
+                {% if reg.status == 'approved' %}bg-emerald-100 dark:bg-emerald-900/30 text-emerald-600 dark:text-emerald-400
+                {% elif reg.status == 'rejected' %}bg-red-100 dark:bg-red-900/30 text-red-600 dark:text-red-400
+                {% else %}bg-amber-100 dark:bg-amber-900/30 text-amber-600 dark:text-amber-400{% endif %}">
+                {% if reg.status == 'approved' %}✓ Approved
+                {% elif reg.status == 'rejected' %}✗ Rejected
+                {% else %}⏳ Pending{% endif %}
+              </span>
+            </a>
+          {% endfor %}
+        </div>
+      {% else %}
+        <div class="bg-white/70 dark:bg-gray-800/70 border border-dashed border-gray-300 dark:border-gray-700 rounded-xl p-8 text-center">
+          <p class="text-gray-400 text-sm">No applications yet.</p>
+          <a href="{% url 'events' %}" class="mt-2 inline-block text-sm text-indigo-600 dark:text-indigo-400 hover:underline">Apply to an event →</a>
+        </div>
+      {% endif %}
+    </div>
+
+  </div>
+</div>
+{% endblock %}

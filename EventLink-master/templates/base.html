@@ -1,0 +1,136 @@
+<!DOCTYPE html>
+<html lang="en" class="dark">
+<head>
+  <meta charset="UTF-8">
+  <title>{% block title %}EventLink{% endblock %}</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <script src="https://cdn.tailwindcss.com"></script>
+  <script>
+    tailwind.config = {
+      darkMode: 'class',
+      theme: {
+        extend: {
+          fontFamily: { sans: ['Inter', 'ui-sans-serif', 'system-ui'] },
+          animation: {
+            'fade-in': 'fadeIn 0.4s ease-out',
+            'slide-up': 'slideUp 0.4s ease-out',
+          },
+          keyframes: {
+            fadeIn: { '0%': { opacity: '0' }, '100%': { opacity: '1' } },
+            slideUp: { '0%': { opacity: '0', transform: 'translateY(16px)' }, '100%': { opacity: '1', transform: 'translateY(0)' } },
+          }
+        }
+      }
+    }
+  </script>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+  <script>
+    // Apply theme before paint to avoid flash
+    if (localStorage.theme === 'light') {
+      document.documentElement.classList.remove('dark')
+    } else {
+      document.documentElement.classList.add('dark')
+    }
+  </script>
+  {% block extra_head %}{% endblock %}
+</head>
+<body class="bg-gray-50 dark:bg-gray-950 text-gray-900 dark:text-gray-100 font-sans antialiased transition-colors duration-300 min-h-screen">
+
+  <!-- Navbar -->
+  <nav class="sticky top-0 z-50 backdrop-blur-md bg-white/80 dark:bg-gray-900/80 border-b border-gray-200/60 dark:border-gray-700/60">
+    <div class="max-w-7xl mx-auto px-6 py-3.5 flex items-center justify-between">
+
+      <a href="{% url 'index' %}" class="flex items-center gap-2 font-bold text-xl text-indigo-600 dark:text-indigo-400 tracking-tight">
+        <svg class="w-6 h-6" fill="none" stroke="currentColor" stroke-width="2.5" viewBox="0 0 24 24">
+          <path stroke-linecap="round" stroke-linejoin="round" d="M13.828 10.172a4 4 0 00-5.656 0l-4 4a4 4 0 105.656 5.656l1.102-1.101"/>
+          <path stroke-linecap="round" stroke-linejoin="round" d="M10.172 13.828a4 4 0 015.656 0l4 4a4 4 0 01-5.656 5.656l-1.102-1.101"/>
+        </svg>
+        EventLink
+      </a>
+
+      <div class="hidden md:flex items-center gap-7 text-sm font-medium text-gray-600 dark:text-gray-300">
+        <a href="{% url 'index' %}" class="hover:text-indigo-600 dark:hover:text-indigo-400 transition">Home</a>
+        <a href="{% url 'events' %}" class="hover:text-indigo-600 dark:hover:text-indigo-400 transition">Events</a>
+        <a href="{% url 'find_teammates' %}" class="hover:text-indigo-600 dark:hover:text-indigo-400 transition">Find Teammates</a>
+      </div>
+
+      <div class="flex items-center gap-3">
+        <!-- Dark mode toggle -->
+        <button onclick="toggleDark()" id="themeBtn"
+          class="w-9 h-9 flex items-center justify-center rounded-xl bg-gray-100 dark:bg-gray-800 hover:bg-gray-200 dark:hover:bg-gray-700 transition text-base">
+          <span id="themeIcon">☀️</span>
+        </button>
+
+        {% if user.is_authenticated %}
+          {% if user.profile.role == 'college' %}
+            <a href="{% url 'college_dashboard' %}"
+              class="text-sm font-medium text-gray-700 dark:text-gray-300 hover:text-indigo-600 dark:hover:text-indigo-400 transition">
+              🏫 {{ user.profile.full_name|default:user.username }}
+            </a>
+          {% else %}
+            <a href="{% url 'dashboard' %}"
+              class="text-sm font-medium text-gray-700 dark:text-gray-300 hover:text-indigo-600 dark:hover:text-indigo-400 transition">
+              {{ user.username }}
+            </a>
+          {% endif %}
+          <a href="{% url 'logout' %}"
+            class="text-sm px-4 py-1.5 rounded-xl border border-gray-200 dark:border-gray-700 hover:border-red-400 hover:text-red-500 dark:hover:border-red-500 dark:hover:text-red-400 transition">
+            Logout
+          </a>
+        {% else %}
+          <a href="{% url 'student_login' %}"
+            class="text-sm px-4 py-1.5 rounded-xl border border-gray-200 dark:border-gray-700 hover:border-indigo-400 hover:text-indigo-600 dark:hover:text-indigo-400 transition">
+            Login
+          </a>
+          <a href="{% url 'student_register' %}"
+            class="text-sm px-4 py-1.5 rounded-xl bg-indigo-600 text-white hover:bg-indigo-700 transition shadow-sm">
+            Register
+          </a>
+        {% endif %}
+      </div>
+    </div>
+  </nav>
+
+  <!-- Flash messages -->
+  {% if messages %}
+    <div class="max-w-7xl mx-auto px-6 pt-4 animate-fade-in">
+      {% for message in messages %}
+        <div class="mb-2 px-4 py-3 rounded-xl text-sm border
+          {% if message.tags == 'error' %}bg-red-50 dark:bg-red-900/20 text-red-700 dark:text-red-400 border-red-200 dark:border-red-800
+          {% else %}bg-indigo-50 dark:bg-indigo-900/20 text-indigo-700 dark:text-indigo-400 border-indigo-200 dark:border-indigo-800{% endif %}">
+          {{ message }}
+        </div>
+      {% endfor %}
+    </div>
+  {% endif %}
+
+  <main class="min-h-[80vh] animate-fade-in">
+    {% block content %}{% endblock %}
+  </main>
+
+  <footer class="border-t border-gray-200/60 dark:border-gray-800 mt-20 py-8 text-center text-sm text-gray-400 dark:text-gray-600">
+    © 2025 EventLink — Built for students, by students.
+  </footer>
+
+  <script>
+    function toggleDark() {
+      const html = document.documentElement
+      if (html.classList.contains('dark')) {
+        html.classList.remove('dark')
+        localStorage.theme = 'light'
+      } else {
+        html.classList.add('dark')
+        localStorage.theme = 'dark'
+      }
+      updateIcon()
+    }
+    function updateIcon() {
+      const icon = document.getElementById('themeIcon')
+      if (icon) icon.textContent = document.documentElement.classList.contains('dark') ? '☀️' : '🌙'
+    }
+    updateIcon()
+  </script>
+
+  {% block extra_scripts %}{% endblock %}
+</body>
+</html>

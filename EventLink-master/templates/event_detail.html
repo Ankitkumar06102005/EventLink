@@ -1,0 +1,78 @@
+{% extends 'base.html' %}
+{% block title %}{{ event.title }} — EventLink{% endblock %}
+
+{% block content %}
+<div class="max-w-4xl mx-auto px-6 py-10 animate-slide-up">
+
+  <a href="{% url 'events' %}" class="text-sm text-gray-400 hover:text-indigo-600 dark:hover:text-indigo-400 transition mb-6 inline-block">
+    ← Back to Events
+  </a>
+
+  <!-- Event info -->
+  <div class="bg-white/70 dark:bg-gray-800/70 backdrop-blur-sm border border-gray-200/60 dark:border-gray-700/60 rounded-2xl p-8 shadow-sm mb-6">
+    <div class="flex items-start justify-between gap-4 flex-wrap">
+      <div>
+        <h1 class="text-2xl font-bold text-gray-900 dark:text-white mb-2">{{ event.title }}</h1>
+        <div class="flex flex-wrap gap-4 text-sm text-gray-400">
+          {% if event.date %}<span>📅 {{ event.date }}</span>{% endif %}
+          {% if event.location %}<span>📍 {{ event.location }}</span>{% endif %}
+          <span>✅ {{ event.approved_teams_count }} approved · ⏳ {{ event.pending_count }} pending</span>
+        </div>
+      </div>
+      {% if my_reg %}
+        <span class="text-sm font-semibold px-4 py-2 rounded-xl
+          {% if my_reg.status == 'approved' %}bg-emerald-100 dark:bg-emerald-900/30 text-emerald-600 dark:text-emerald-400
+          {% elif my_reg.status == 'rejected' %}bg-red-100 dark:bg-red-900/30 text-red-600 dark:text-red-400
+          {% else %}bg-amber-100 dark:bg-amber-900/30 text-amber-600 dark:text-amber-400{% endif %}">
+          Your team: {% if my_reg.status == 'approved' %}✓ Approved{% elif my_reg.status == 'rejected' %}✗ Rejected{% else %}⏳ Pending{% endif %}
+        </span>
+      {% endif %}
+    </div>
+    <p class="text-gray-600 dark:text-gray-300 leading-relaxed mt-4">{{ event.description }}</p>
+  </div>
+
+  <!-- Registered teams -->
+  <h2 class="text-lg font-semibold text-gray-900 dark:text-white mb-4">
+    Registered Teams
+    <span class="ml-2 text-sm font-normal text-gray-400">({{ registrations.count }})</span>
+  </h2>
+
+  {% if registrations %}
+    <div class="space-y-3">
+      {% for reg in registrations %}
+        <div class="bg-white/70 dark:bg-gray-800/70 backdrop-blur-sm border border-gray-200/60 dark:border-gray-700/60 rounded-xl p-4 flex items-center justify-between gap-4">
+          <div class="flex-1">
+            <div class="flex items-center gap-3 mb-1">
+              <p class="font-semibold text-gray-900 dark:text-white">{{ reg.team.name }}</p>
+              <span class="text-xs font-semibold px-2.5 py-0.5 rounded-full
+                {% if reg.status == 'approved' %}bg-emerald-100 dark:bg-emerald-900/30 text-emerald-600 dark:text-emerald-400
+                {% elif reg.status == 'rejected' %}bg-red-100 dark:bg-red-900/30 text-red-600 dark:text-red-400
+                {% else %}bg-amber-100 dark:bg-amber-900/30 text-amber-600 dark:text-amber-400{% endif %}">
+                {{ reg.get_status_display }}
+              </span>
+            </div>
+            <p class="text-xs text-gray-400">
+              Leader: {{ reg.team.leader.profile.full_name|default:reg.team.leader.username }} ·
+              {{ reg.team.members.count }} member{{ reg.team.members.count|pluralize }}
+            </p>
+            <!-- Members -->
+            <div class="flex flex-wrap gap-1.5 mt-2">
+              {% for member in reg.team.members.all %}
+                <span class="text-xs px-2 py-0.5 rounded-full bg-gray-100 dark:bg-gray-700 text-gray-600 dark:text-gray-300">
+                  {{ member.profile.full_name|default:member.username }}
+                </span>
+              {% endfor %}
+            </div>
+          </div>
+          <p class="text-xs text-gray-400 shrink-0">{{ reg.submitted_at|date:"M d" }}</p>
+        </div>
+      {% endfor %}
+    </div>
+  {% else %}
+    <div class="bg-white/70 dark:bg-gray-800/70 border border-dashed border-gray-300 dark:border-gray-700 rounded-xl p-8 text-center">
+      <p class="text-gray-400 text-sm">No teams have applied yet.</p>
+    </div>
+  {% endif %}
+
+</div>
+{% endblock %}

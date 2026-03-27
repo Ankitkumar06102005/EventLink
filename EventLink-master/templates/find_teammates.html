@@ -1,0 +1,76 @@
+{% extends 'base.html' %}
+{% block title %}Find Teammates — EventLink{% endblock %}
+
+{% block content %}
+<div class="max-w-6xl mx-auto px-6 py-10 animate-slide-up">
+  <div class="mb-6">
+    <h1 class="text-2xl font-bold text-gray-900 dark:text-white">Find Teammates</h1>
+    <p class="text-sm text-gray-400 mt-1">Connect with students who are ready to build something great</p>
+  </div>
+
+  <!-- Search + filter -->
+  <form method="GET" class="flex flex-col sm:flex-row gap-3 mb-8">
+    <input name="q" value="{{ query }}" placeholder="Search by name..."
+      class="flex-1 px-4 py-2.5 rounded-xl border border-gray-200 dark:border-gray-700 bg-white dark:bg-gray-800 text-sm text-gray-900 dark:text-gray-100 focus:outline-none focus:ring-2 focus:ring-indigo-400 transition placeholder-gray-400">
+    <select name="virtue"
+      class="px-4 py-2.5 rounded-xl border border-gray-200 dark:border-gray-700 bg-white dark:bg-gray-800 text-sm text-gray-900 dark:text-gray-100 focus:outline-none focus:ring-2 focus:ring-indigo-400 transition">
+      <option value="">All Skills</option>
+      {% for v in all_virtues %}
+        <option value="{{ v }}" {% if virtue_filter == v %}selected{% endif %}>{{ v }}</option>
+      {% endfor %}
+    </select>
+    <button type="submit"
+      class="px-5 py-2.5 bg-indigo-600 text-white rounded-xl text-sm font-semibold hover:bg-indigo-700 transition">
+      Search
+    </button>
+    {% if query or virtue_filter %}
+      <a href="{% url 'find_teammates' %}"
+        class="px-5 py-2.5 border border-gray-200 dark:border-gray-700 text-gray-500 dark:text-gray-400 rounded-xl text-sm hover:border-red-300 hover:text-red-500 transition">
+        Clear
+      </a>
+    {% endif %}
+  </form>
+
+  {% if profiles %}
+    <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-5">
+      {% for p in profiles %}
+        <div class="bg-white/70 dark:bg-gray-800/70 backdrop-blur-sm border border-gray-200/60 dark:border-gray-700/60 rounded-2xl p-5 shadow-sm hover:shadow-xl hover:-translate-y-1 hover:border-indigo-300 dark:hover:border-indigo-700 transition duration-300">
+          <div class="flex items-center gap-3 mb-4">
+            {% if p.profile_picture %}
+              <img src="{{ p.profile_picture.url }}" class="w-12 h-12 rounded-xl object-cover" alt="avatar">
+            {% else %}
+              <div class="w-12 h-12 rounded-xl bg-gradient-to-br from-indigo-500 to-purple-600 flex items-center justify-center font-bold text-white text-lg shadow">
+                {{ p.user.username|first|upper }}
+              </div>
+            {% endif %}
+            <div>
+              <p class="font-semibold text-gray-900 dark:text-white">{{ p.full_name|default:p.user.username }}</p>
+              <p class="text-xs text-gray-400">
+                {% if p.class_name %}{{ p.class_name }}{% if p.section %} · {{ p.section }}{% endif %}{% else %}Student{% endif %}
+              </p>
+            </div>
+          </div>
+          {% if p.about_you %}
+            <p class="text-sm text-gray-500 dark:text-gray-400 mb-4 leading-relaxed">{{ p.about_you|truncatechars:90 }}</p>
+          {% endif %}
+          {% if p.virtues.all %}
+            <div class="flex flex-wrap gap-1.5">
+              {% for virtue in p.virtues.all %}
+                <span class="text-xs px-2.5 py-0.5 rounded-full bg-indigo-100 dark:bg-indigo-900/40 text-indigo-600 dark:text-indigo-400 font-medium">
+                  {{ virtue.name }}
+                </span>
+              {% endfor %}
+            </div>
+          {% endif %}
+        </div>
+      {% endfor %}
+    </div>
+  {% else %}
+    <div class="text-center py-24 text-gray-400">
+      <p class="text-5xl mb-4">🔍</p>
+      <p class="text-lg font-medium dark:text-gray-300">No students found</p>
+      <p class="text-sm mt-1">Try a different search or clear filters</p>
+    </div>
+  {% endif %}
+</div>
+{% endblock %}

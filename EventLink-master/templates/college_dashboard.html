@@ -1,0 +1,164 @@
+{% extends 'base.html' %}
+{% block title %}College Dashboard — EventLink{% endblock %}
+
+{% block content %}
+<div class="max-w-6xl mx-auto px-6 py-10 animate-slide-up">
+
+  <!-- Header -->
+  <div class="flex items-center justify-between mb-8">
+    <div>
+      <h1 class="text-2xl font-bold text-gray-900 dark:text-white">
+        {{ user.profile.full_name|default:user.username }} 🏫
+      </h1>
+      <p class="text-sm text-gray-400 mt-0.5">College Dashboard</p>
+    </div>
+    <a href="{% url 'create_event' %}"
+      class="px-5 py-2.5 bg-indigo-600 text-white rounded-xl text-sm font-semibold hover:bg-indigo-700 hover:scale-[1.02] transition shadow-lg shadow-indigo-500/25">
+      + Create Event
+    </a>
+  </div>
+
+  <!-- Stats -->
+  <div class="grid grid-cols-2 sm:grid-cols-4 gap-4 mb-8">
+    <div class="bg-gradient-to-br from-indigo-500 to-purple-600 text-white p-5 rounded-2xl shadow-lg shadow-indigo-500/20">
+      <p class="text-xs font-medium text-indigo-200 mb-1">Events</p>
+      <p class="text-3xl font-bold">{{ my_events.count }}</p>
+    </div>
+    <div class="bg-gradient-to-br from-amber-400 to-orange-500 text-white p-5 rounded-2xl shadow-lg shadow-amber-500/20">
+      <p class="text-xs font-medium text-amber-100 mb-1">Pending</p>
+      <p class="text-3xl font-bold">{{ pending.count }}</p>
+    </div>
+    <div class="bg-gradient-to-br from-emerald-400 to-cyan-500 text-white p-5 rounded-2xl shadow-lg shadow-emerald-500/20">
+      <p class="text-xs font-medium text-emerald-100 mb-1">Approved</p>
+      <p class="text-3xl font-bold">{{ approved.count }}</p>
+    </div>
+    <div class="bg-gradient-to-br from-pink-500 to-rose-500 text-white p-5 rounded-2xl shadow-lg shadow-pink-500/20">
+      <p class="text-xs font-medium text-pink-200 mb-1">Participants</p>
+      <p class="text-3xl font-bold">{{ total_participants }}</p>
+    </div>
+  </div>
+
+  <!-- Pending Applications (most important — shown first) -->
+  {% if pending %}
+  <div class="mb-8">
+    <h2 class="text-lg font-semibold text-gray-900 dark:text-white mb-4 flex items-center gap-2">
+      Pending Applications
+      <span class="text-xs bg-amber-100 dark:bg-amber-900/30 text-amber-600 dark:text-amber-400 px-2.5 py-0.5 rounded-full font-medium">
+        {{ pending.count }} waiting
+      </span>
+    </h2>
+    <div class="space-y-3">
+      {% for reg in pending %}
+        <div class="bg-white/70 dark:bg-gray-800/70 backdrop-blur-sm border border-amber-200/60 dark:border-amber-800/40 rounded-2xl p-5 shadow-sm">
+          <div class="flex items-start justify-between gap-4 flex-wrap">
+            <div class="flex-1">
+              <div class="flex items-center gap-2 mb-1">
+                <p class="font-semibold text-gray-900 dark:text-white">{{ reg.team.name }}</p>
+                <span class="text-xs text-gray-400">→</span>
+                <p class="text-sm text-indigo-600 dark:text-indigo-400">{{ reg.event.title }}</p>
+              </div>
+              <p class="text-xs text-gray-400 mb-3">
+                Leader: {{ reg.team.leader.profile.full_name|default:reg.team.leader.username }} ·
+                {{ reg.team.members.count }} member{{ reg.team.members.count|pluralize }} ·
+                Applied {{ reg.submitted_at|date:"M d, Y" }}
+              </p>
+              <!-- Team members -->
+              <div class="flex flex-wrap gap-1.5">
+                {% for member in reg.team.members.all %}
+                  <span class="text-xs px-2.5 py-0.5 rounded-full bg-gray-100 dark:bg-gray-700 text-gray-600 dark:text-gray-300">
+                    {{ member.profile.full_name|default:member.username }}
+                  </span>
+                {% endfor %}
+              </div>
+            </div>
+            <div class="flex gap-2 shrink-0">
+              <form method="POST" action="{% url 'approve_team' reg.id %}">
+                {% csrf_token %}
+                <button type="submit"
+                  class="px-4 py-2 bg-emerald-500 hover:bg-emerald-600 text-white text-sm font-semibold rounded-xl transition hover:scale-[1.02]">
+                  ✓ Approve
+                </button>
+              </form>
+              <form method="POST" action="{% url 'reject_team' reg.id %}">
+                {% csrf_token %}
+                <button type="submit"
+                  class="px-4 py-2 bg-red-500 hover:bg-red-600 text-white text-sm font-semibold rounded-xl transition hover:scale-[1.02]">
+                  ✗ Reject
+                </button>
+              </form>
+            </div>
+          </div>
+        </div>
+      {% endfor %}
+    </div>
+  </div>
+  {% endif %}
+
+  <!-- All Events with their registrations -->
+  <h2 class="text-lg font-semibold text-gray-900 dark:text-white mb-4">Your Events</h2>
+
+  {% if my_events %}
+    <div class="space-y-4">
+      {% for event in my_events %}
+        <div class="bg-white/70 dark:bg-gray-800/70 backdrop-blur-sm border border-gray-200/60 dark:border-gray-700/60 rounded-2xl p-5 shadow-sm">
+          <div class="flex items-start justify-between gap-4 flex-wrap mb-3">
+            <div>
+              <h3 class="font-semibold text-gray-900 dark:text-white">{{ event.title }}</h3>
+              <div class="flex flex-wrap gap-3 text-xs text-gray-400 mt-1">
+                {% if event.date %}<span>📅 {{ event.date }}</span>{% endif %}
+                {% if event.location %}<span>📍 {{ event.location }}</span>{% endif %}
+              </div>
+            </div>
+            <div class="flex gap-3 text-xs shrink-0">
+              <span class="px-2.5 py-1 rounded-full bg-amber-100 dark:bg-amber-900/30 text-amber-600 dark:text-amber-400 font-medium">
+                ⏳ {{ event.pending_count }} pending
+              </span>
+              <span class="px-2.5 py-1 rounded-full bg-emerald-100 dark:bg-emerald-900/30 text-emerald-600 dark:text-emerald-400 font-medium">
+                ✓ {{ event.approved_teams_count }} approved
+              </span>
+            </div>
+          </div>
+
+          {% with event.registrations.all as regs %}
+            {% if regs %}
+              <div class="border-t border-gray-100 dark:border-gray-700 pt-3 space-y-2">
+                {% for reg in regs %}
+                  <div class="flex items-center justify-between text-sm">
+                    <div class="flex items-center gap-2">
+                      <span class="font-medium text-gray-800 dark:text-gray-200">{{ reg.team.name }}</span>
+                      <span class="text-xs text-gray-400">{{ reg.team.members.count }} members</span>
+                    </div>
+                    <span class="text-xs font-semibold px-2.5 py-0.5 rounded-full
+                      {% if reg.status == 'approved' %}bg-emerald-100 dark:bg-emerald-900/30 text-emerald-600 dark:text-emerald-400
+                      {% elif reg.status == 'rejected' %}bg-red-100 dark:bg-red-900/30 text-red-600 dark:text-red-400
+                      {% else %}bg-amber-100 dark:bg-amber-900/30 text-amber-600 dark:text-amber-400{% endif %}">
+                      {{ reg.get_status_display }}
+                    </span>
+                  </div>
+                {% endfor %}
+              </div>
+            {% else %}
+              <p class="text-xs text-gray-400 pt-2 border-t border-gray-100 dark:border-gray-700">No applications yet.</p>
+            {% endif %}
+          {% endwith %}
+
+          <div class="mt-3">
+            <a href="{% url 'event_detail' event.id %}" class="text-xs text-indigo-600 dark:text-indigo-400 hover:underline">
+              View full details →
+            </a>
+          </div>
+        </div>
+      {% endfor %}
+    </div>
+  {% else %}
+    <div class="bg-white/70 dark:bg-gray-800/70 border border-dashed border-gray-300 dark:border-gray-700 rounded-2xl p-12 text-center">
+      <p class="text-4xl mb-3">🎯</p>
+      <p class="text-gray-400 text-sm">No events yet.</p>
+      <a href="{% url 'create_event' %}" class="mt-3 inline-block text-sm text-indigo-600 dark:text-indigo-400 font-medium hover:underline">
+        Create your first event →
+      </a>
+    </div>
+  {% endif %}
+
+</div>
+{% endblock %}
