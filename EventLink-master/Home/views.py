@@ -33,10 +33,18 @@ def logoutUser(request):
 
 # ─── Auth ─────────────────────────────────────────────────────────────────────
 
+def _get_role(user):
+    """Safe profile role access — never crashes."""
+    try:
+        return user.profile.role
+    except Exception:
+        Profile.objects.get_or_create(user=user)
+        return 'student'
+
+
 def student_login(request):
-    # Already logged in → redirect away
     if request.user.is_authenticated:
-        return redirect("college_dashboard" if request.user.profile.role == "college" else "dashboard")
+        return redirect("college_dashboard" if _get_role(request.user) == "college" else "dashboard")
     if request.method == "POST":
         username = request.POST.get("username", "").strip()
         password = request.POST.get("password", "")
@@ -44,9 +52,10 @@ def student_login(request):
             messages.error(request, "Please fill in all fields")
             return render(request, "student_login.html")
         user = authenticate(request, username=username, password=password)
-        if user:
+        if user is not None:
             login(request, user)
-            return redirect("college_dashboard" if user.profile.role == "college" else "dashboard")
+            Profile.objects.get_or_create(user=user)
+            return redirect("college_dashboard" if _get_role(user) == "college" else "dashboard")
         messages.error(request, "Invalid username or password")
     return render(request, "student_login.html")
 
@@ -72,6 +81,7 @@ def student_register(request):
             messages.error(request, "Username already taken")
             return render(request, "student_register.html")
         user = User.objects.create_user(username=username, email=email, password=password1)
+        Profile.objects.get_or_create(user=user)
         login(request, user)
         return redirect('complete_profile')
     return render(request, "student_register.html")
@@ -113,9 +123,10 @@ def college_register(request):
             messages.error(request, "Username already taken")
             return render(request, "college_register.html")
         user = User.objects.create_user(username=username, email=email, password=password1)
-        user.profile.role = "college"
-        user.profile.full_name = college_name
-        user.profile.save()
+        profile, _ = Profile.objects.get_or_create(user=user)
+        profile.role = "college"
+        profile.full_name = college_name
+        profile.save()
         login(request, user)
         return redirect("college_dashboard")
     return render(request, "college_register.html")
@@ -125,10 +136,9 @@ def college_register(request):
 
 @login_required
 def dashboard(request):
-    # College users shouldn't land here
-    if request.user.profile.role == 'college':
+    if _get_role(request.user) == 'college':
         return redirect('college_dashboard')
-    profile = request.user.profile
+    profile, _ = Profile.objects.get_or_create(user=request.user)
     teams = request.user.teams.all()
     my_team = Team.objects.filter(leader=request.user).first()
     registrations = (
@@ -183,8 +193,7 @@ def find_teammates(request):
 
 @login_required
 def create_team(request):
-    # College accounts can't create teams
-    if request.user.profile.role == 'college':
+    if _get_role(request.user) == 'college':
         return redirect('college_dashboard')
     if request.method == "POST":
         name = request.POST.get("team_name", "").strip()
@@ -260,7 +269,7 @@ def event_detail(request, event_id):
 
 @login_required
 def college_dashboard(request):
-    if request.user.profile.role != 'college':
+    if _get_role(request.user) != 'college':
         return redirect('dashboard')
     my_events = Event.objects.filter(created_by=request.user).order_by('-date')
     registrations = (
@@ -286,7 +295,7 @@ def college_dashboard(request):
 
 @login_required
 def create_event(request):
-    if request.user.profile.role != 'college':
+    if _get_role(request.user) != 'college':
         return redirect('dashboard')
     if request.method == "POST":
         form = EventForm(request.POST)
