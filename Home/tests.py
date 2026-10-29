@@ -70,3 +70,11 @@ class EventLinkAuthenticationTests(TestCase):
         })
         self.assertEqual(response.status_code, 429)
         self.assertEqual(response["Retry-After"], "60")
+
+    def test_registration_rate_limit_returns_429_after_five_posts(self):
+        for _ in range(5):
+            response = self.client.post(reverse("student_register"), {})
+            self.assertEqual(response.status_code, 400)
+        response = self.client.post(reverse("student_register"), {})
+        self.assertEqual(response.status_code, 429)
+        self.assertEqual(response["Retry-After"], "3600")
