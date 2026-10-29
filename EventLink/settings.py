@@ -99,12 +99,43 @@ WSGI_APPLICATION = 'EventLink.wsgi.application'
 # Database
 # https://docs.djangoproject.com/en/5.1/ref/settings/#databases
 
-DATABASES = {
-    'default': {
-        'ENGINE': 'django.db.backends.sqlite3',
-        'NAME': BASE_DIR / 'db.sqlite3',
+# Use managed PostgreSQL when DATABASE_URL is configured; retain SQLite for local development.
+_DATABASE_URL = os.environ.get("DATABASE_URL", "").strip()
+if _DATABASE_URL:
+    import dj_database_url
+    DATABASES = {
+        "default": dj_database_url.parse(
+            _DATABASE_URL,
+            conn_max_age=600,
+            conn_health_checks=True,
+            ssl_require=not DEBUG,
+        )
     }
-}
+else:
+    DATABASES = {
+        "default": {
+            "ENGINE": "django.db.backends.sqlite3",
+            "NAME": BASE_DIR / "db.sqlite3",
+        }
+    }
+
+# Use shared Redis for rate limits in multi-worker deployments when REDIS_URL is set.
+_REDIS_URL = os.environ.get("REDIS_URL", "").strip()
+if _REDIS_URL:
+    CACHES = {
+        "default": {
+            "BACKEND": "django_redis.cache.RedisCache",
+            "LOCATION": _REDIS_URL,
+            "OPTIONS": {"CLIENT_CLASS": "django_redis.client.DefaultClient"},
+        }
+    }
+else:
+    CACHES = {
+        "default": {
+            "BACKEND": "django.core.cache.backends.locmem.LocMemCache",
+            "LOCATION": "eventlink-local-cache",
+        }
+    }
 
 
 # Password validation
