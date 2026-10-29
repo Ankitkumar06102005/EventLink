@@ -1,0 +1,18 @@
+# Python
+__pycache__/
+*.py[cod]
+*.pyo
+*.pyd
+.Python
+.venv/
+venv/
+.env
+.env.*
+
+# Django runtime output
+staticfiles/
+media/
+*.log
+
+# Local databases (do not commit student/account data)
+*.sqlite3

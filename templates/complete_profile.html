@@ -1,70 +1,69 @@
 {% extends "base.html" %}
 {% load widget_tweaks %}
-
+{% block title %}Complete your profile — EventLink{% endblock %}
 {% block content %}
-<div class="min-h-screen flex items-center justify-center">
-  <div class="bg-white p-8 rounded-2xl shadow-md w-full max-w-4xl mt-4">
-    <h1 class="text-3xl font-bold mb-4 text-center">Complete Your Profile</h1>
-    <p class="text-gray-500 text-center mb-8">Help us get to know you better</p>
-
-    <form method="post" enctype="multipart/form-data" class="grid grid-cols-1 md:grid-cols-2 gap-6">
+<section class="mx-auto max-w-5xl px-5 py-12 lg:px-8 lg:py-16">
+  <div class="reveal mb-8 max-w-2xl">
+    <p class="accent text-xs font-bold uppercase tracking-[.2em]">Make it yours</p>
+    <h1 class="mt-3 text-4xl font-bold sm:text-5xl">Complete your profile.</h1>
+    <p class="mt-4 leading-7 text-muted">Give potential teammates a little context about who you are and what you enjoy building.</p>
+  </div>
+  <div class="surface reveal p-6 sm:p-9">
+    {% if form.non_field_errors %}
+      <div class="mb-6 rounded-xl border border-red-500/30 bg-red-500/10 p-4 text-sm text-red-200" role="alert">{{ form.non_field_errors }}</div>
+    {% endif %}
+    <form method="post" enctype="multipart/form-data" class="space-y-7">
       {% csrf_token %}
-
-      <!-- Left -->
-      <div class="space-y-4">
+      <div class="grid gap-6 md:grid-cols-2">
         <div>
-          <label class="block text-sm font-semibold mb-1">Full Name</label>
-          {{ form.full_name|add_class:"w-full p-2 border rounded-lg" }}
-        </div>
-        <div class="grid grid-cols-2 gap-4">
-          <div>
-            <label class="block text-sm font-semibold mb-1">Class</label>
-            {{ form.class_name|add_class:"w-full p-2 border rounded-lg" }}
-          </div>
-          <div>
-            <label class="block text-sm font-semibold mb-1">Section</label>
-            {{ form.section|add_class:"w-full p-2 border rounded-lg" }}
-          </div>
+          <label for="{{ form.full_name.id_for_label }}" class="mb-2 block text-sm font-medium">Full name</label>
+          {% render_field form.full_name class+="field" autocomplete="name" %}
+          {% for error in form.full_name.errors %}<p class="mt-2 text-sm text-red-300">{{ error }}</p>{% endfor %}
         </div>
         <div>
-          <label class="block text-sm font-semibold mb-1">Net Number</label>
-          {{ form.net_number|add_class:"w-full p-2 border rounded-lg" }}
+          <label for="{{ form.net_number.id_for_label }}" class="mb-2 block text-sm font-medium">Student / NET number</label>
+          {% render_field form.net_number class+="field" %}
+          {% for error in form.net_number.errors %}<p class="mt-2 text-sm text-red-300">{{ error }}</p>{% endfor %}
         </div>
         <div>
-          <label class="block text-sm font-semibold mb-1">About You</label>
-          {{ form.about_you|add_class:"w-full p-2 border rounded-lg" }}
-        </div>
-      </div>
-
-      <!-- Right -->
-      <div class="space-y-6">
-        <div class="flex flex-col items-center">
-          <label class="block text-sm font-semibold mb-2">Profile Picture</label>
-          {{ form.profile_picture }}
+          <label for="{{ form.class_name.id_for_label }}" class="mb-2 block text-sm font-medium">Class</label>
+          {% render_field form.class_name class+="field" %}
+          {% for error in form.class_name.errors %}<p class="mt-2 text-sm text-red-300">{{ error }}</p>{% endfor %}
         </div>
         <div>
-          <label class="block text-sm font-semibold mb-2">About Virtues</label>
-          <div class="flex flex-col gap-2">
-            {% for cb in form.virtues %}
-              <label class="flex items-center space-x-2">
-                {{ cb.tag }}
-                <span>{{ cb.choice_label }}</span>
+          <label for="{{ form.section.id_for_label }}" class="mb-2 block text-sm font-medium">Section</label>
+          {% render_field form.section class+="field" %}
+          {% for error in form.section.errors %}<p class="mt-2 text-sm text-red-300">{{ error }}</p>{% endfor %}
+        </div>
+        <div class="md:col-span-2">
+          <label for="{{ form.about_you.id_for_label }}" class="mb-2 block text-sm font-medium">About you</label>
+          {% render_field form.about_you class+="field" rows="4" placeholder="Your interests, skills, and the things you want to build..." %}
+          {% for error in form.about_you.errors %}<p class="mt-2 text-sm text-red-300">{{ error }}</p>{% endfor %}
+        </div>
+        <div class="md:col-span-2">
+          <label for="{{ form.profile_picture.id_for_label }}" class="mb-2 block text-sm font-medium">Profile picture <span class="text-muted">(optional)</span></label>
+          {% render_field form.profile_picture class+="block w-full text-sm text-muted file:mr-4 file:rounded-full file:border-0 file:bg-[#f5d547] file:px-4 file:py-2 file:font-semibold file:text-black hover:file:bg-[#ffe66e]" %}
+          {% for error in form.profile_picture.errors %}<p class="mt-2 text-sm text-red-300">{{ error }}</p>{% endfor %}
+        </div>
+        <fieldset class="md:col-span-2">
+          <legend class="mb-3 text-sm font-medium">Interests and values</legend>
+          <div class="grid gap-3 sm:grid-cols-2">
+            {% for choice in form.virtues %}
+              <label class="flex items-center gap-3 rounded-xl border border-white/10 bg-black/20 p-3 text-sm text-muted">
+                {{ choice.tag }} <span>{{ choice.choice_label }}</span>
               </label>
+            {% empty %}
+              <p class="text-sm text-muted">Interest options will appear here when configured.</p>
             {% endfor %}
           </div>
-        </div>
+          {% for error in form.virtues.errors %}<p class="mt-2 text-sm text-red-300">{{ error }}</p>{% endfor %}
+        </fieldset>
       </div>
-
-      <!-- Actions -->
-      <div class="col-span-2 flex justify-between mt-8">
-        <button type="submit" class="bg-blue-600 hover:bg-blue-700 text-white font-semibold px-6 py-2 rounded-lg">
-          Save Profile
-        </button>
-        <a href="{% url 'dashboard' %}" class="text-gray-500 hover:text-blue-600 font-semibold">
-          Skip for now
-        </a>
+      <div class="flex flex-wrap items-center gap-3 border-t border-white/10 pt-6">
+        <button type="submit" class="btn-primary">Save profile <span aria-hidden="true">↗</span></button>
+        <a href="{% url 'dashboard' %}" class="btn-secondary">Skip for now</a>
       </div>
     </form>
   </div>
-</div>
+</section>
 {% endblock %}

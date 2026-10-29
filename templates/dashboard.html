@@ -1,91 +1,30 @@
-{% extends 'base.html' %}
-
+{% extends "base.html" %}
+{% block title %}Your dashboard — EventLink{% endblock %}
 {% block content %}
-  <div class="max-w-6xl mx-auto p-6">
-    <h1 class="text-3xl font-bold mb-6">Dashboard</h1>
-  
-    <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
-      <!-- Upcoming Events -->
-      <div>
-        <h2 class="text-xl font-semibold mb-3">Upcoming Events</h2>
-        <div class="bg-white border rounded-lg p-4 space-y-4">
-          <!-- Event Card -->
-          <div>
-            <p class="font-semibold">Hackathon</p>
-            <p class="text-sm text-gray-600">December 5, 2024</p>
-            <p class="text-sm text-gray-600">Symposium Hall</p>
-          </div>
-          <div>
-            <p class="font-semibold">Esports Tournament</p>
-            <p class="text-sm text-gray-600">January 15, 2025</p>
-            <p class="text-sm text-gray-600">Student Center</p>
-          </div>
-        </div>
-      </div>
-  
-      <!-- Team Requests -->
-      <div>
-        <h2 class="text-xl font-semibold mb-3">Team Requests</h2>
-        <div class="bg-white border rounded-lg p-4 space-y-4">
-          <!-- Team Request -->
-          <div class="flex justify-between items-center">
-            <div>
-              <p class="font-semibold">Byte Warriors</p>
-              <p class="text-sm text-gray-600">Hackathon</p>
-            </div>
-            <div class="space-x-2">
-              <button class="px-3 py-1 text-sm bg-blue-100 text-blue-700 rounded">Accept</button>
-              <button class="px-3 py-1 text-sm bg-gray-100 text-gray-700 rounded">Decline</button>
-            </div>
-          </div>
-          <div class="flex justify-between items-center">
-            <div>
-              <p class="font-semibold">Frag Masters</p>
-              <p class="text-sm text-gray-600">Esports Tournament</p>
-            </div>
-            <div class="space-x-2">
-              <button class="px-3 py-1 text-sm bg-blue-100 text-blue-700 rounded">Accept</button>
-              <button class="px-3 py-1 text-sm bg-gray-100 text-gray-700 rounded">Decline</button>
-            </div>
-          </div>
-        </div>
-      </div>
-  
-      <!-- Sent Join Requests (Left Column) -->
-      <div>
-        <h2 class="text-xl font-semibold mt-6 mb-3">Your activity</h2>
-        <div class="bg-white border rounded-lg p-4 space-y-4">
-          <div class="flex justify-between items-center">
-            <div>
-              <p class="font-semibold">Hackathon</p>
-              <p class="text-sm text-gray-600">Byte Warriors</p>
-            </div>
-            <span class="text-sm text-yellow-500">Pending</span>
-          </div>
-        </div>
-      </div>
-  
-      <!-- Sent Join Requests (Right Column) -->
-      <div>
-        <h2 class="text-xl font-semibold mt-6 mb-3 invisible md:visible">Sent Join Requests</h2>
-        <div class="bg-white border rounded-lg p-4 space-y-4">
-          <div class="flex justify-between items-center">
-            <div>
-              <p class="font-semibold">Hackathon</p>
-              <p class="text-sm text-gray-600">Byte Warriors</p>
-            </div>
-            <button class="px-3 py-1 text-sm bg-red-100 text-red-700 rounded">Cancel Request</button>
-          </div>
-          <div class="flex justify-between items-center">
-            <div>
-              <p class="font-semibold">Esports Tournament</p>
-              <p class="text-sm text-gray-600">GameChangers</p>
-            </div>
-            <span class="text-sm text-green-600">Accepted</span>
-          </div>
-        </div>
-      </div>
+<section class="mx-auto max-w-7xl px-5 py-14 lg:px-8 lg:py-20">
+  <div class="reveal relative overflow-hidden rounded-3xl border border-[#f5d547]/25 bg-[#f5d547]/[.06] p-7 sm:p-10">
+    <div class="orb right-[-3rem] top-[-4rem] h-64 w-64"></div>
+    <p class="accent text-xs font-bold uppercase tracking-[.2em]">Your EventLink space</p>
+    <h1 class="mt-3 text-4xl font-bold sm:text-5xl">Welcome back, {{ user.username|escape }}.</h1>
+    <p class="mt-4 max-w-2xl leading-7 text-muted">Your account is active. We're building out the event discovery and team-matching experience—this dashboard won't show invented events or fake requests.</p>
+    <div class="mt-7 flex flex-wrap gap-3">
+      <a href="{% url 'complete_profile' %}" class="btn-primary">Complete your profile <span aria-hidden="true">↗</span></a>
+      <a href="{% url 'index' %}#features" class="btn-secondary">Explore EventLink</a>
     </div>
   </div>
-  
+  <div class="mt-8 grid gap-4 md:grid-cols-2">
+    <article class="surface reveal p-6">
+      <p class="accent text-sm font-semibold">01 / Your profile</p>
+      <h2 class="mt-3 text-2xl font-semibold">Tell people about you.</h2>
+      <p class="mt-3 leading-7 text-muted">Add your interests and background so teammates can learn what you bring to a project.</p>
+      <a href="{% url 'complete_profile' %}" class="mt-5 inline-flex font-semibold text-[#f5d547] hover:underline">Set up your profile ↗</a>
+    </article>
+    <article class="surface reveal p-6" style="transition-delay:100ms">
+      <p class="accent text-sm font-semibold">02 / What's next</p>
+      <h2 class="mt-3 text-2xl font-semibold">Events and teams are next.</h2>
+      <p class="mt-3 leading-7 text-muted">Live event listings and team requests are not connected yet. We won't pretend sample data is real activity.</p>
+      <a href="{% url 'index' %}#how-it-works" class="mt-5 inline-flex font-semibold text-[#f5d547] hover:underline">See how EventLink works ↗</a>
+    </article>
+  </div>
+</section>
 {% endblock %}

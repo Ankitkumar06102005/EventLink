@@ -1,58 +1,97 @@
-<!DOCTYPE html>
+<!doctype html>
 <html lang="en">
 <head>
+  <script>document.documentElement.classList.add("js");</script>
   <meta charset="UTF-8">
-  <title>{% block title %}EventLink{% endblock %}</title>
-  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
-  <link href="https://cdn.jsdelivr.net/npm/tailwindcss@2.2.19/dist/tailwind.min.css" rel="stylesheet">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <meta name="theme-color" content="#111111">
+  <meta name="description" content="EventLink helps students discover events and connect with teams.">
+  <title>{% block title %}EventLink — Find your next big thing{% endblock %}</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=DM+Sans:wght@400;500;600;700&family=Space+Grotesk:wght@400;500;600;700&display=swap" rel="stylesheet">
   <script src="https://cdn.tailwindcss.com"></script>
+  <style>
+    :root{color-scheme:dark;--ink:#111111;--panel:#191919;--yellow:#f5d547;--muted:#aaa9a2}
+    *{box-sizing:border-box}
+    html{scroll-behavior:smooth;scroll-padding-top:90px}
+    body{margin:0;background:var(--ink);color:#f8f7f0;font-family:'DM Sans',sans-serif}
+    h1,h2,h3,.display{font-family:'Space Grotesk',sans-serif;letter-spacing:-.045em}
+    .text-muted{color:var(--muted)}
+    .accent{color:var(--yellow)}
+    .btn-primary{display:inline-flex;align-items:center;justify-content:center;gap:.6rem;background:var(--yellow);color:#111;font-weight:700;border:1px solid var(--yellow);border-radius:999px;padding:.85rem 1.25rem;transition:transform .22s ease,background .22s ease}
+    .btn-primary:hover{transform:translateY(-2px);background:#ffe66e}
+    .btn-secondary{display:inline-flex;align-items:center;justify-content:center;border:1px solid #444;border-radius:999px;padding:.85rem 1.25rem;color:#f8f7f0;transition:border-color .2s ease,background .2s ease}
+    .btn-secondary:hover{border-color:var(--yellow);background:#222}
+    .surface{background:linear-gradient(145deg,#1c1c1c,#151515);border:1px solid #303030;border-radius:1.25rem}
+    .site-header{position:sticky;top:0;z-index:50;background:rgba(17,17,17,.86);backdrop-filter:blur(18px);border-bottom:1px solid rgba(255,255,255,.08)}
+    .nav-link{color:#c7c6bf;transition:color .2s ease}.nav-link:hover,.nav-link:focus{color:var(--yellow)}
+    .reveal{opacity:1;transform:none}
+    .js .reveal{opacity:0;transform:translateY(22px);transition:opacity .7s ease,transform .7s cubic-bezier(.2,.7,.2,1)}
+    .js .reveal.is-visible{opacity:1;transform:translateY(0)}
+    .grid-glow{background-image:linear-gradient(rgba(255,255,255,.035) 1px,transparent 1px),linear-gradient(90deg,rgba(255,255,255,.035) 1px,transparent 1px);background-size:48px 48px}
+    .orb{position:absolute;border-radius:999px;background:var(--yellow);filter:blur(1px);opacity:.12;pointer-events:none}
+    input{color:#fff}
+    .field{width:100%;background:#111;border:1px solid #3b3b3b;border-radius:.8rem;padding:.85rem 1rem;outline:none;transition:border-color .2s,box-shadow .2s}
+    .field:focus{border-color:var(--yellow);box-shadow:0 0 0 3px rgba(245,213,71,.12)}
+    @media(prefers-reduced-motion:reduce){html{scroll-behavior:auto}.reveal,.js .reveal{opacity:1;transform:none;transition:none}*,*::before,*::after{animation-duration:.01ms!important;animation-iteration-count:1!important;transition-duration:.01ms!important}}
+  </style>
   {% block extra_head %}{% endblock %}
 </head>
-<body class="bg-white text-gray-800">
-  <!-- Navbar -->
-  <header class="flex items-center justify-center justify-between p-6 border-b shadow-sm max-w-7xl mx-auto">
-    <!-- Logo -->
-    <div class="text-xl font-bold flex items-center space-x-2">
-      <img src="https://img.icons8.com/ios-filled/50/link--v1.png" class="w-6 h-6" alt="logo" />
-      <span>EVENTLINK</span>
-    </div>
-
-    <!-- Nav Links -->
-    <nav class="flex-1 flex justify-center max-w-7xl mx-auto">
-      <ul class="flex gap-8 text-lg font-medium">
-        <li><a href="{% url 'home' %}" class="hover:text-blue-600">Home</a></li>
-        {% comment %}
-          
-        <li><a href="{% url 'events' %}" class="hover:text-blue-600">Events</a></li>{% endcomment %}
-        <li><a href="{% url 'teams' %}" class="hover:text-blue-600">Teams</a></li>
-        <li><a href="{% url 'teams' %}" class="hover:text-blue-600">About us</a></li>
-      </ul>
-    </nav>
-
-    <!-- Auth Buttons -->
-    <div class="space-x-2">
-      {% if user.is_authenticated %}
-        <span class="text-sm"><a href={% url "dashboard" %} class="text-decoration-line: underline">Hello, {{ user.username }}</a></span>
-        <a href="{% url 'logout' %}" class="px-4 py-1.5 border border-gray-400 rounded-md">Logout</a>
-      {% else %}
-        <a href="{% url 'student_login' %}" class="px-3 py-1.5 bg-blue-600 text-white rounded-md">Student Login</a>
-        <a href="{% url 'college_login' %}" class="px-3 py-1.5 border border-blue-600 text-blue-600 rounded-md">College Login</a>
-      {% endif %}
+<body>
+  <header class="site-header">
+    <div class="mx-auto flex max-w-7xl items-center justify-between gap-5 px-5 py-4 lg:px-8">
+      <a href="{% url 'index' %}" class="flex items-center gap-3" aria-label="EventLink home">
+        <span class="flex h-10 w-10 items-center justify-center rounded-xl bg-[#f5d547] text-xl font-bold text-black">E<span class="text-sm">↗</span></span>
+        <span class="display text-xl font-bold tracking-tight">event<span class="accent">link</span></span>
+      </a>
+      <nav class="hidden items-center gap-8 md:flex" aria-label="Main navigation">
+        <a class="nav-link text-sm font-medium" href="{% url 'index' %}">Home</a>
+        <a class="nav-link text-sm font-medium" href="{% url 'index' %}#features">Features</a>
+        <a class="nav-link text-sm font-medium" href="{% url 'index' %}#how-it-works">How it works</a>
+      </nav>
+      <div class="flex items-center gap-2">
+        {% if user.is_authenticated %}
+          <a href="{% url 'dashboard' %}" class="hidden text-sm text-muted sm:inline">Hi, {{ user.username }}</a>
+          <form method="post" action="{% url 'logout' %}" class="inline">{% csrf_token %}<button class="btn-secondary !px-4 !py-2 text-sm" type="submit">Log out</button></form>
+        {% else %}
+          <a href="{% url 'student_login' %}" class="btn-secondary !px-4 !py-2 text-sm">Log in</a>
+          <a href="{% url 'student_register' %}" class="btn-primary !px-4 !py-2 text-sm">Get started <span aria-hidden="true">↗</span></a>
+        {% endif %}
+      </div>
     </div>
   </header>
-
-  <!-- Main Content -->
   <main class="min-h-[70vh]">
-    {% block content %}
-    <!-- Page-specific content goes here -->
-    {% endblock %}
+    {% if messages %}
+      <div class="mx-auto max-w-7xl px-5 pt-4 lg:px-8">{% for message in messages %}<p class="rounded-xl border border-[#5b5125] bg-[#282514] px-4 py-3 text-sm text-[#f5d547]" role="status">{{ message }}</p>{% endfor %}</div>
+    {% endif %}
+    {% block content %}{% endblock %}
   </main>
-
-  <!-- Footer -->
-  <footer class="bg-gray-100 text-center py-4 border-t mt-10 b-0">
-    <p class="text-sm text-gray-600">&copy; 2025 EventLink. All rights reserved.</p>
+  <footer class="mt-20 border-t border-white/10">
+    <div class="mx-auto flex max-w-7xl flex-col gap-3 px-5 py-8 text-sm text-muted sm:flex-row sm:items-center sm:justify-between lg:px-8">
+      <a href="{% url 'index' %}" class="display font-bold text-white">event<span class="accent">link</span></a>
+      <p>Make room for your next big idea.</p>
+      <p>&copy; {% now "Y" %} EventLink</p>
+    </div>
   </footer>
-
+  <script>
+    (() => {
+      const items = document.querySelectorAll('.reveal');
+      if (!('IntersectionObserver' in window) || window.matchMedia('(prefers-reduced-motion: reduce)').matches) {
+        items.forEach(item => item.classList.add('is-visible'));
+        return;
+      }
+      const observer = new IntersectionObserver(entries => {
+        entries.forEach(entry => {
+          if (entry.isIntersecting) {
+            entry.target.classList.add('is-visible');
+            observer.unobserve(entry.target);
+          }
+        });
+      }, { threshold: 0.12, rootMargin: '0px 0px -35px 0px' });
+      items.forEach(item => observer.observe(item));
+    })();
+  </script>
   {% block extra_scripts %}{% endblock %}
 </body>
 </html>
