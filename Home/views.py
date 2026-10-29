@@ -7,6 +7,7 @@ from django.contrib.auth.models import User
 from django.contrib.auth.password_validation import validate_password
 from django.core.cache import cache
 from django.core.exceptions import ValidationError
+from django.core.validators import validate_email
 from django.db import IntegrityError
 from django.http import HttpResponse
 from django.shortcuts import redirect, render
@@ -120,6 +121,18 @@ def student_register(request):
     if not username or not email or not password1 or not password2:
         return render(request, "student_register.html", {
             "error_msg": "Complete every field to create your account."
+        }, status=400)
+
+    if len(username) > 150 or len(email) > 254:
+        return render(request, "student_register.html", {
+            "error_msg": "Your username or email is too long."
+        }, status=400)
+
+    try:
+        validate_email(email)
+    except ValidationError:
+        return render(request, "student_register.html", {
+            "error_msg": "Enter a valid email address."
         }, status=400)
 
     if password1 != password2:
