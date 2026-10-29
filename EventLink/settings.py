@@ -40,6 +40,9 @@ if _allowed_hosts:
     ALLOWED_HOSTS.extend(host.strip() for host in _allowed_hosts.split(",") if host.strip())
 # Render provides this hostname automatically for web services.
 _render_hostname = os.environ.get("RENDER_EXTERNAL_HOSTNAME", "").strip()
+# Trust forwarded client addresses only when running behind a configured ingress proxy.
+# Render supplies X-Forwarded-For through its proxy; local development trusts no proxy.
+TRUSTED_PROXY_HOPS = max(0, int(os.environ.get("TRUSTED_PROXY_HOPS", "1" if _render_hostname else "0")) )
 if _render_hostname:
     ALLOWED_HOSTS.append(_render_hostname)
 
