@@ -78,3 +78,34 @@ class EventLinkAuthenticationTests(TestCase):
         response = self.client.post(reverse("student_register"), {})
         self.assertEqual(response.status_code, 429)
         self.assertEqual(response["Retry-After"], "3600")
+
+    def test_dashboard_requires_authentication(self):
+        response = self.client.get(reverse("dashboard"))
+        self.assertRedirects(
+            response,
+            f'{reverse("student_login")}?next={reverse("dashboard")}',
+            fetch_redirect_response=False,
+        )
+
+    def test_profile_completion_requires_authentication(self):
+        response = self.client.get(reverse("complete_profile"))
+        self.assertRedirects(
+            response,
+            f'{reverse("student_login")}?next={reverse("complete_profile")}',
+            fetch_redirect_response=False,
+        )
+
+    def test_registration_rejects_duplicate_email(self):
+        User.objects.create_user(
+            username="existingstudent",
+            email="student@example.com",
+            password="R3allyStrong!Passphrase",
+        )
+        response = self.client.post(reverse("student_register"), {
+            "username": "anotherstudent",
+            "email": "STUDENT@example.com",
+            "password1": "R3allyStrong!Passphrase",
+            "password2": "R3allyStrong!Passphrase",
+        })
+        self.assertEqual(response.status_code, 400)
+        self.assertFalse(User.objects.filter(username="anotherstudent").exists())
