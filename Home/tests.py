@@ -1,7 +1,9 @@
 from django.contrib.auth.models import User
 from django.core.cache import cache
-from django.test import TestCase
+from django.test import RequestFactory, TestCase, override_settings
 from django.urls import reverse
+
+from Home.views import _client_ip
 
 
 class EventLinkAuthenticationTests(TestCase):
@@ -217,3 +219,13 @@ class EventLinkAuthenticationTests(TestCase):
         profile = Profile.objects.get(user=user)
         self.assertEqual(profile.full_name, "Updated Name")
         self.assertEqual(Profile.objects.filter(user=user).count(), 1)
+
+
+    @override_settings(TRUSTED_PROXY_HOPS=1)
+    def test_client_ip_uses_configured_proxy_header(self):
+        request = RequestFactory().post(
+            "/student_login",
+            REMOTE_ADDR="192.0.2.10",
+            HTTP_X_FORWARDED_FOR="203.0.113.20",
+        )
+        self.assertEqual(_client_ip(request), "203.0.113.20")
