@@ -1,0 +1,5 @@
+Django==5.1.2
+django-widget-tweaks==1.5.0
+Pillow>=10.4,<12
+gunicorn>=22,<24
+whitenoise>=6.8,<7
