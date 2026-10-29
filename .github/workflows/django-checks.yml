@@ -9,11 +9,15 @@ on:
 jobs:
   test:
     runs-on: ubuntu-latest
+    permissions:
+      contents: read
     env:
       DJANGO_DEBUG: "True"
       DJANGO_SECRET_KEY: "ci-only-not-a-production-secret"
     steps:
       - uses: actions/checkout@v4
+        with:
+          persist-credentials: false
       - uses: actions/setup-python@v5
         with:
           python-version: "3.11"
@@ -26,3 +30,8 @@ jobs:
         run: python manage.py test
       - name: Check static collection
         run: python manage.py collectstatic --noinput
+      - name: Production-mode Django checks
+        env:
+          DJANGO_DEBUG: "False"
+          DJANGO_SECRET_KEY: "ci-only-not-a-production-secret"
+        run: python manage.py check --deploy
