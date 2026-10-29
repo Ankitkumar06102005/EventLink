@@ -1,5 +1,6 @@
 <!doctype html>
 <html lang="en">
+<script>document.documentElement.classList.add("js");</script>
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1">
@@ -25,14 +26,15 @@
     .surface{background:linear-gradient(145deg,#1c1c1c,#151515);border:1px solid #303030;border-radius:1.25rem}
     .site-header{position:sticky;top:0;z-index:50;background:rgba(17,17,17,.86);backdrop-filter:blur(18px);border-bottom:1px solid rgba(255,255,255,.08)}
     .nav-link{color:#c7c6bf;transition:color .2s ease}.nav-link:hover,.nav-link:focus{color:var(--yellow)}
-    .reveal{opacity:0;transform:translateY(22px);transition:opacity .7s ease,transform .7s cubic-bezier(.2,.7,.2,1)}
-    .reveal.is-visible{opacity:1;transform:translateY(0)}
+    .reveal{opacity:1;transform:none}
+    .js .reveal{opacity:0;transform:translateY(22px);transition:opacity .7s ease,transform .7s cubic-bezier(.2,.7,.2,1)}
+    .js .reveal.is-visible{opacity:1;transform:translateY(0)}
     .grid-glow{background-image:linear-gradient(rgba(255,255,255,.035) 1px,transparent 1px),linear-gradient(90deg,rgba(255,255,255,.035) 1px,transparent 1px);background-size:48px 48px}
     .orb{position:absolute;border-radius:999px;background:var(--yellow);filter:blur(1px);opacity:.12;pointer-events:none}
     input{color:#fff}
     .field{width:100%;background:#111;border:1px solid #3b3b3b;border-radius:.8rem;padding:.85rem 1rem;outline:none;transition:border-color .2s,box-shadow .2s}
     .field:focus{border-color:var(--yellow);box-shadow:0 0 0 3px rgba(245,213,71,.12)}
-    @media(prefers-reduced-motion:reduce){html{scroll-behavior:auto}.reveal{opacity:1;transform:none;transition:none}*,*::before,*::after{animation-duration:.01ms!important;animation-iteration-count:1!important;transition-duration:.01ms!important}}
+    @media(prefers-reduced-motion:reduce){html{scroll-behavior:auto}.reveal,.js .reveal{opacity:1;transform:none;transition:none}*,*::before,*::after{animation-duration:.01ms!important;animation-iteration-count:1!important;transition-duration:.01ms!important}}
   </style>
   {% block extra_head %}{% endblock %}
 </head>
