@@ -10,6 +10,7 @@ For the full list of settings and their values, see
 https://docs.djangoproject.com/en/5.1/ref/settings/
 """
 
+import os
 from pathlib import Path
 
 # Build paths inside the project like this: BASE_DIR / 'subdir'.
@@ -20,12 +21,30 @@ BASE_DIR = Path(__file__).resolve().parent.parent
 # See https://docs.djangoproject.com/en/5.1/howto/deployment/checklist/
 
 # SECURITY WARNING: keep the secret key used in production secret!
-SECRET_KEY = 'django-insecure-b@+!q-m2xb7k@$pbann&8+zaz@77q&8vxqx@85zu2=^v$kc0ge'
+# Configure DJANGO_SECRET_KEY in the deployment environment. The fallback is local-development only.
+SECRET_KEY = os.environ.get(
+    "DJANGO_SECRET_KEY",
+    "django-insecure-local-development-only-change-this-key",
+)
 
-# SECURITY WARNING: don't run with debug turned on in production!
-DEBUG = True
+# Production-safe default. Set DJANGO_DEBUG=True only for local development.
+DEBUG = os.environ.get("DJANGO_DEBUG", "False").strip().lower() in {"1", "true", "yes"}
 
-ALLOWED_HOSTS = []
+_allowed_hosts = os.environ.get("DJANGO_ALLOWED_HOSTS", "")
+ALLOWED_HOSTS = ["localhost", "127.0.0.1"]
+if _allowed_hosts:
+    ALLOWED_HOSTS.extend(host.strip() for host in _allowed_hosts.split(",") if host.strip())
+# Render provides this hostname automatically for web services.
+_render_hostname = os.environ.get("RENDER_EXTERNAL_HOSTNAME", "").strip()
+if _render_hostname:
+    ALLOWED_HOSTS.append(_render_hostname)
+
+_csrf_origins = os.environ.get("CSRF_TRUSTED_ORIGINS", "")
+CSRF_TRUSTED_ORIGINS = [
+    origin.strip() for origin in _csrf_origins.split(",") if origin.strip()
+]
+if _render_hostname:
+    CSRF_TRUSTED_ORIGINS.append(f"https://{_render_hostname}")
 
 
 # Application definition
