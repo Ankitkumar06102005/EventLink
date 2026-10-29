@@ -12,6 +12,7 @@ https://docs.djangoproject.com/en/5.1/ref/settings/
 
 import os
 from pathlib import Path
+from django.core.exceptions import ImproperlyConfigured
 
 # Build paths inside the project like this: BASE_DIR / 'subdir'.
 BASE_DIR = Path(__file__).resolve().parent.parent
@@ -21,14 +22,17 @@ BASE_DIR = Path(__file__).resolve().parent.parent
 # See https://docs.djangoproject.com/en/5.1/howto/deployment/checklist/
 
 # SECURITY WARNING: keep the secret key used in production secret!
-# Configure DJANGO_SECRET_KEY in the deployment environment. The fallback is local-development only.
-SECRET_KEY = os.environ.get(
-    "DJANGO_SECRET_KEY",
-    "django-insecure-local-development-only-change-this-key",
-)
-
-# Production-safe default. Set DJANGO_DEBUG=True only for local development.
+# Production deployments must provide a private DJANGO_SECRET_KEY.
+# The development fallback is permitted only when DEBUG is explicitly enabled.
 DEBUG = os.environ.get("DJANGO_DEBUG", "False").strip().lower() in {"1", "true", "yes"}
+SECRET_KEY = os.environ.get("DJANGO_SECRET_KEY")
+if not SECRET_KEY:
+    if DEBUG:
+        SECRET_KEY = "django-insecure-local-development-only-change-this-key"
+    else:
+        raise ImproperlyConfigured(
+            "Set DJANGO_SECRET_KEY in the deployment environment before starting EventLink."
+        )
 
 _allowed_hosts = os.environ.get("DJANGO_ALLOWED_HOSTS", "")
 ALLOWED_HOSTS = ["localhost", "127.0.0.1"]
