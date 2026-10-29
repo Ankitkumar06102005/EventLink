@@ -1,6 +1,8 @@
 from functools import wraps
 import hashlib
+import ipaddress
 
+from django.conf import settings
 from django.contrib import messages
 from django.contrib.auth import authenticate, login, logout
 from django.contrib.auth.decorators import login_required
@@ -12,28 +14,67 @@ from django.core.validators import validate_email
 from django.db import IntegrityError
 from django.http import HttpResponse
 from django.shortcuts import redirect, render
+from django.utils.http import url_has_allowed_host_and_scheme
 
 from .forms import ProfileForm
+from .models import Profile
+
+
+def _client_ip(request):
+    """Resolve a client IP only when the deployment explicitly trusts proxy hops."""
+    peer = request.META.get("REMOTE_ADDR", "unknown")
+    try:
+        peer = str(ipaddress.ip_address(peer))
+    except ValueError:
+        return "unknown"
+
+    trusted_hops = max(0, int(getattr(settings, "TRUSTED_PROXY_HOPS", 0)))
+    if not trusted_hops:
+        return peer
+
+    forwarded = request.META.get("HTTP_X_FORWARDED_FOR", "")
+    candidates = []
+    for value in forwarded.split(","):
+        value = value.strip()
+        if not value:
+            continue
+        try:
+            candidates.append(str(ipaddress.ip_address(value)))
+        except ValueError:
+            # Ignore malformed forwarded values; never use them as cache keys.
+            continue
+
+    # The immediate peer is trusted by configuration. Walk left past the
+    # configured proxy hops; the remaining rightmost address is the client.
+    chain = candidates + [peer]
+    index = len(chain) - trusted_hops - 1
+    return chain[index] if 0 <= index < len(chain) else peer
+
+
+def _rate_key(*parts):
+    digest = hashlib.sha256("|".join(parts).encode("utf-8")).hexdigest()[:32]
+    return f"eventlink:rate:{digest}"
+
+
+def _increment_counter(key, window):
+    """Atomically-ish increment a short-lived cache counter."""
+    if cache.add(key, 1, timeout=window):
+        return 1
+    try:
+        return cache.incr(key)
+    except ValueError:
+        cache.set(key, 1, timeout=window)
+        return 1
 
 
 def rate_limit(scope, limit, window):
-    """Small cache-backed per-IP throttle for authentication POST requests."""
+    """Cache-backed per-client throttle for authentication POST requests."""
     def decorator(view):
         @wraps(view)
         def wrapped(request, *args, **kwargs):
             if request.method == "POST":
-                # Use the direct peer address; do not trust client-supplied X-Forwarded-For.
-                ip = request.META.get("REMOTE_ADDR", "unknown")
-                digest = hashlib.sha256(ip.encode("utf-8")).hexdigest()[:24]
-                key = f"eventlink:rate:{scope}:{digest}"
-                if cache.add(key, 1, timeout=window):
-                    attempts = 1
-                else:
-                    try:
-                        attempts = cache.incr(key)
-                    except ValueError:
-                        cache.set(key, 1, timeout=window)
-                        attempts = 1
+                ip = _client_ip(request)
+                attempts = _increment_counter(_rate_key(scope, ip), window)
                 if attempts > limit:
                     response = HttpResponse(
                         "Too many attempts. Please wait a little and try again.",
@@ -75,30 +116,61 @@ def events(request):
 
 @rate_limit("login", limit=10, window=60)
 def student_login(request):
+    next_url = request.POST.get("next") or request.GET.get("next") or ""
+    safe_next = next_url if url_has_allowed_host_and_scheme(
+        url=next_url,
+        allowed_hosts={request.get_host()},
+        require_https=request.is_secure(),
+    ) else ""
+
     if request.method == "POST":
         identifier = (request.POST.get("identifier") or "").strip()
         password = request.POST.get("password") or ""
 
         if not identifier or not password:
             return render(request, "student_login.html", {
-                "error_msg": "Enter your email/username and password."
+                "error_msg": "Enter your email/username and password.",
+                "next_url": safe_next,
             }, status=400)
 
-        username = identifier
+        user_record = None
         if "@" in identifier:
-            user_record = User.objects.filter(email__iexact=identifier).only("username").first()
-            username = user_record.username if user_record else ""
+            user_record = User.objects.filter(email__iexact=identifier).first()
+        if user_record is None:
+            user_record = User.objects.filter(username__iexact=identifier).first()
 
-        user = authenticate(request, username=username, password=password) if username else None
+        canonical_identity = user_record.username.lower() if user_record else identifier.casefold()
+        ip = _client_ip(request)
+        account_key = _rate_key("login-account", canonical_identity)
+        account_attempts = cache.get(account_key, 0)
+
+        username = user_record.username if user_record else identifier
+        user = authenticate(request, username=username, password=password)
+
         if user is not None:
+            # Never lock a legitimate user out because an attacker guessed their
+            # identifier. Correct credentials are accepted even after failures.
+            cache.delete(account_key)
             login(request, user)
-            return redirect("dashboard")
+            return redirect(safe_next or "dashboard")
+
+        failed_attempts = _increment_counter(account_key, 60)
+        # A canonical identity bucket follows username/email aliases across IPs.
+        # It throttles failed attempts only; valid credentials above still work.
+        if account_attempts >= 10 or failed_attempts > 10:
+            response = render(request, "student_login.html", {
+                "error_msg": "Too many unsuccessful attempts for these credentials. Try again shortly.",
+                "next_url": safe_next,
+            }, status=429)
+            response["Retry-After"] = "60"
+            return response
 
         return render(request, "student_login.html", {
-            "error_msg": "Those credentials didn't match an account. Please try again."
+            "error_msg": "Those credentials didn't match an account. Please try again.",
+            "next_url": safe_next,
         }, status=400)
 
-    return render(request, "student_login.html")
+    return render(request, "student_login.html", {"next_url": safe_next})
 
 
 def college_login(request):
@@ -141,18 +213,17 @@ def student_register(request):
             "error_msg": "The passwords do not match."
         }, status=400)
 
-    if User.objects.filter(username__iexact=username).exists():
+    if (
+        User.objects.filter(username__iexact=username).exists()
+        or User.objects.filter(email__iexact=email).exclude(email="").exists()
+    ):
         return render(request, "student_register.html", {
-            "error_msg": "That username is already in use. Choose another."
+            "error_msg": "That username or email is already in use."
         }, status=400)
 
-    if User.objects.filter(email__iexact=email).exclude(email="").exists():
-        return render(request, "student_register.html", {
-            "error_msg": "An account with that email already exists. Log in instead."
-        }, status=400)
-
+    candidate_user = User(username=username, email=email)
     try:
-        validate_password(password1)
+        validate_password(password1, user=candidate_user)
     except ValidationError as exc:
         return render(request, "student_register.html", {
             "error_msg": " ".join(exc.messages)
@@ -162,7 +233,7 @@ def student_register(request):
         user = User.objects.create_user(username=username, email=email, password=password1)
     except IntegrityError:
         return render(request, "student_register.html", {
-            "error_msg": "We couldn't create that account. Check your details and try again."
+            "error_msg": "That username or email is already in use."
         }, status=400)
 
     login(request, user)
@@ -195,14 +266,28 @@ def create_team(request):
 
 @login_required(login_url="student_login")
 def complete_profile(request):
+    existing_profile = Profile.objects.filter(user=request.user).first()
     if request.method == "POST":
-        form = ProfileForm(request.POST, request.FILES)
+        form = ProfileForm(request.POST, request.FILES, instance=existing_profile)
         if form.is_valid():
             profile = form.save(commit=False)
             profile.user = request.user
-            profile.save()
+            try:
+                profile.save()
+            except IntegrityError:
+                # A parallel first submission may have created the one-to-one row.
+                existing_profile = Profile.objects.filter(user=request.user).first()
+                if existing_profile is None:
+                    raise
+                form = ProfileForm(request.POST, request.FILES, instance=existing_profile)
+                if not form.is_valid():
+                    return render(request, "complete_profile.html", {"form": form})
+                profile = form.save(commit=False)
+                profile.user = request.user
+                profile.save()
             form.save_m2m()
+            messages.success(request, "Your profile has been saved.")
             return redirect("dashboard")
     else:
-        form = ProfileForm()
+        form = ProfileForm(instance=existing_profile)
     return render(request, "complete_profile.html", {"form": form})
