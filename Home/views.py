@@ -3,6 +3,7 @@ import hashlib
 
 from django.contrib import messages
 from django.contrib.auth import authenticate, login, logout
+from django.contrib.auth.decorators import login_required
 from django.contrib.auth.models import User
 from django.contrib.auth.password_validation import validate_password
 from django.core.cache import cache
@@ -169,14 +170,17 @@ def student_register(request):
     return redirect("dashboard")
 
 
+@login_required(login_url="student_login")
 def student_form(request):
     return render(request, "student_form.html")
 
 
+@login_required(login_url="student_login")
 def dashboard(request):
     return render(request, "dashboard.html")
 
 
+@login_required(login_url="student_login")
 def profile(request):
     return HttpResponse("this is profile")
 
@@ -189,6 +193,7 @@ def create_team(request):
     return redirect("find_teammates")
 
 
+@login_required(login_url="student_login")
 def complete_profile(request):
     if request.method == "POST":
         form = ProfileForm(request.POST, request.FILES)
